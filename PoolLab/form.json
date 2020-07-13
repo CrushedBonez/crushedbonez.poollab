@@ -1,0 +1,15 @@
+{
+  "elements":
+  [
+    { "type": "Label", "label": "Configuration PoolLab"},
+    { "name": "CloudEndpoint", "type": "ValidationTextBox", "caption": "Cloud-Endpoint" },
+    { "name": "ApiKey", "type": "ValidationTextBox", "caption": "API-Key" },
+    { "name": "DebugEnabled", "type": "CheckBox", "caption": "Debug-Ausgaben" },
+    { "name": "StartTime", "type": "NumberSpinner", "caption": "StartTime (Datenimport ab)"},
+    { "type": "Label", "label": "StartTime auf 0 setzen um alle Daten nochmal zu importieren."}
+  ],
+  "actions":
+  [
+    { "type": "Button", "label": "Import now", "onClick": "PoolLab_ImportData($id);" }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+	"id": "{391A27E6-B2E9-2B8B-0331-82BDE3540FDA}",
+	"name": "PoolLabAccount",
+	"type": 3,
+	"vendor": "Water-i.d. GmbH",
+	"aliases": [],
+	"parentRequirements": [],
+	"childRequirements": [],
+	"implemented": [],
+	"prefix": "PoolLabAccount"
+}
