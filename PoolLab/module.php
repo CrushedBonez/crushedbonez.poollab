@@ -9,15 +9,14 @@ class PoolLab extends IPSModule
         $this->RegisterPropertyString('ApiKey', '');
         $this->RegisterPropertyInteger('StartTime', 0);
         $this->RegisterPropertyBoolean('DebugEnabled', false);
-
+        $this->RegisterPropertyBoolean('ArchiveControlEnabled', false);
+        IPS_LogMessage(IPS_GetName($this->InstanceID), "Executed function Create()");
         // Import data every 60 minutes
         $this->RegisterTimer('ImportData', 60 * 60 * 1000, 'PoolLab_ImportData(' . $this->InstanceID . ');');
     }
 
     public function ApplyChanges() {
         parent::ApplyChanges();
-        
-        $ParentID = $this->InstanceID;
     }
 
     private function QueryLabcomCloud(string $QueryString) {
@@ -51,8 +50,15 @@ class PoolLab extends IPSModule
         }
     }
 
-    private function GetMeasurements(string $AccountID) {
+    private function GetMeasurements(string $AccountID, bool $DebugEnabled) {
         $StartTime = IPS_GetProperty($this->InstanceID, "StartTime") + 1;
+        //Temporary fix for first import until proper Re-Aggregation handling
+        if ($StartTime == 1) {
+            if ($DebugEnabled) {
+                IPS_LogMessage(IPS_GetName($this->InstanceID), "Increasing max_execution_time to 600 seconds for initial import.");
+            }
+            ini_set('max_execution_time', 600);
+        }
         $Query = "{Accounts(id: $AccountID){Measurements(from: $StartTime){id,scenario,parameter,unit,comment,value,ideal_low,ideal_high,timestamp}}}";
         $ResponseMeasurements = $this->QueryLabcomCloud($Query);
         if ($ResponseMeasurements[0] == 200) {
@@ -95,6 +101,7 @@ class PoolLab extends IPSModule
             IPS_SetParent($VariableID, $ParentID);
             IPS_SetIdent($VariableID, $AccountIdent);
             IPS_SetPosition($VariableID, $AccountID + 100);
+            PoolLabAccount_SetArchiveControl($VariableID, IPS_GetProperty($this->InstanceID, 'ArchiveControlEnabled'));
         }
         PoolLabAccount_SetAccountDetails($VariableID, $AccountID, $AccountForename, $AccountSurname, $AccountStreet, $AccountZipcode, $AccountCity, $AccountPoolVolume, $AccountPoolText);
         return $AccountID;
@@ -140,7 +147,7 @@ class PoolLab extends IPSModule
                 $Accounts = $this->ParseCloudAccount($CloudAccount[1], $DebugEnabled);
                 foreach ($Accounts as $Account) {
                     $AccountID = $this->ParseAccount($Account, $DebugEnabled);
-                    $Measurements = $this->GetMeasurements($AccountID);
+                    $Measurements = $this->GetMeasurements($AccountID, $DebugEnabled);
                     $AccountVariableID = IPS_GetObjectIDByIdent("Account" . $Account->{'id'} , $this->InstanceID);
                     if ($DebugEnabled) {
                         IPS_LogMessage(IPS_GetName($this->InstanceID), "Working on Account " . IPS_GetName($AccountVariableID));

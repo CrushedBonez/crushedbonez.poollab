@@ -21,10 +21,39 @@ class PoolLabAccount extends IPSModule
         $this->RegisterPropertyString('AccountCity', '');
         $this->RegisterPropertyString('AccountPoolVolume', '');
         $this->RegisterPropertyString('AccountPoolText', '');
+        $this->RegisterPropertyBoolean('ArchiveControlEnabled', false);
     }
 
     public function ApplyChanges() {
         parent::ApplyChanges();
+        $ArchiveControlEnabled = IPS_GetProperty($this->InstanceID, 'ArchiveControlEnabled');
+        $ACID = IPS_GetInstanceListByModuleID("{43192F0B-135B-4CE7-A0A7-1475603F3060}")[0];
+        $ChildVariables = IPS_GetChildrenIDs($this->InstanceID);
+        if ($ArchiveControlEnabled) {
+            foreach($ChildVariables as $VariableID) {
+                AC_SetLoggingStatus($ACID, $VariableID, true);
+            }
+        } else {
+            foreach($ChildVariables as $VariableID) {
+                AC_DeleteVariableData($ACID, $VariableID, 0, 0);
+            }
+        }
+        IPS_ApplyChanges($ACID);
+    }
+
+    public function SetArchiveControl(bool $ArchiveControlEnabled) {
+        $CurrentValue = IPS_GetProperty($this->InstanceID, 'ArchiveControlEnabled');
+        if ($ArchiveControlEnabled != $CurrentValue) {
+            IPS_SetProperty($this->InstanceID, 'ArchiveControlEnabled', $ArchiveControlEnabled);
+            $ACID = IPS_GetInstanceListByModuleID("{43192F0B-135B-4CE7-A0A7-1475603F3060}")[0];
+            $ChildVariables = IPS_GetChildrenIDs($this->InstanceID);
+
+            foreach($ChildVariables as $VariableID) {
+                AC_SetLoggingStatus($ACID, $VariableID, $ArchiveControlEnabled);
+            }
+            IPS_ApplyChanges($ACID);
+            IPS_ApplyChanges($this->InstanceID);
+        }
     }
 
     public function SetAccountDetails(string $AccountID, string $AccountForename, string $AccountSurname, string $AccountStreet, string $AccountZipcode, string $AccountCity, string $AccountPoolVolume, string $AccountPoolText) {
@@ -52,6 +81,7 @@ class PoolLabAccount extends IPSModule
         $ParentID = $this->InstanceID;
         $MeasurementNumber = substr($MeasurementScenario, 0, 3);
         $MeasurementIdent = "Measurement" . $MeasurementNumber;
+        $ArchiveControlEnabled = IPS_GetProperty($this->InstanceID, 'ArchiveControlEnabled');
 
         $VariableID = @IPS_GetObjectIDByIdent($MeasurementIdent, $ParentID);
         if ($VariableID == false) {
@@ -64,14 +94,18 @@ class PoolLabAccount extends IPSModule
             IPS_SetName($VariableID, $VariableName);
             IPS_SetIdent($VariableID, $MeasurementIdent);
             IPS_SetPosition($VariableID, $MeasurementNumber);
-            AC_SetLoggingStatus($ACID, $VariableID, true);
-            IPS_ApplyChanges($ACID);
+            if ($ArchiveControlEnabled) {
+                AC_SetLoggingStatus($ACID, $VariableID, true);
+                IPS_ApplyChanges($ACID);
+            }
         }
-        $IsLogged = sizeof(AC_GetLoggedValues($ACID, $VariableID, $MeasurementTimestamp, $MeasurementTimestamp, 1), 0);
-        if ($IsLogged == 0) {
-            AC_AddLoggedValues($ACID, $VariableID, [['TimeStamp' => $MeasurementTimestamp, 'Value' => $MeasurementValue]]);
-            AC_ReAggregateVariable($ACID, $VariableID);
-            sleep(1);
+        if ($ArchiveControlEnabled) {
+            $IsLogged = sizeof(AC_GetLoggedValues($ACID, $VariableID, $MeasurementTimestamp, $MeasurementTimestamp, 1), 0);
+            if ($IsLogged == 0) {
+                AC_AddLoggedValues($ACID, $VariableID, [['TimeStamp' => $MeasurementTimestamp, 'Value' => $MeasurementValue]]);
+                AC_ReAggregateVariable($ACID, $VariableID);
+                sleep(1);
+            }
         }
         if (time() - IPS_GetVariable($VariableID)['VariableUpdated'] > 60) {
             SetValueFloat($VariableID, $MeasurementValue);
@@ -88,6 +122,7 @@ class PoolLabAccount extends IPSModule
         array_push($elements, ["type" => "Label", "caption" => "Account ID " . IPS_GetProperty($this->InstanceID, 'AccountID')]);
         array_push($elements, ["type" => "Label", "caption" => $Address]);
         array_push($elements, ["type" => "Label", "caption" => "Poolinhalt: " . IPS_GetProperty($this->InstanceID, 'AccountPoolVolume') . " m3"]);
+        array_push($elements, ["name" => "ArchiveControlEnabled", "type" => "CheckBox", "caption" => "Historische Werte (über Archive-Control)"]);
 
         $form = (object) [
             'elements' => $elements,

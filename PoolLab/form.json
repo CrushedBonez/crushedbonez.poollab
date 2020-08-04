@@ -4,12 +4,14 @@
     { "type": "Label", "label": "Configuration PoolLab"},
     { "name": "CloudEndpoint", "type": "ValidationTextBox", "caption": "Cloud-Endpoint" },
     { "name": "ApiKey", "type": "ValidationTextBox", "caption": "API-Key" },
+    { "name": "ArchiveControlEnabled", "type": "CheckBox", "caption": "Historische Werte für neue Accounts erfassen (über Archive-Control)"},
     { "name": "DebugEnabled", "type": "CheckBox", "caption": "Debug-Ausgaben" },
     { "name": "StartTime", "type": "NumberSpinner", "caption": "StartTime (Datenimport ab)"},
     { "type": "Label", "label": "StartTime auf 0 setzen um alle Daten nochmal zu importieren."}
   ],
   "actions":
   [
-    { "type": "Button", "label": "Import now", "onClick": "PoolLab_ImportData($id);" }
+    { "type": "Button", "label": "Import now", "onClick": "PoolLab_ImportData($id);" },
+    { "type": "Button", "label": "Reset Timestamp", "onClick": "IPS_SetProperty($id, 'StartTime', 0);IPS_ApplyChanges($id);"}
   ]
 }
