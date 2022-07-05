@@ -57,7 +57,7 @@ class PoolLab extends IPSModule
             if ($DebugEnabled) {
                 IPS_LogMessage(IPS_GetName($this->InstanceID), "Increasing max_execution_time to 600 seconds for initial import.");
             }
-            ini_set('max_execution_time', 600);
+            //ini_set('max_execution_time', 600);
         }
         $Query = "{Accounts(id: $AccountID){Measurements(from: $StartTime){id,scenario,parameter,unit,comment,value,ideal_low,ideal_high,timestamp}}}";
         $ResponseMeasurements = $this->QueryLabcomCloud($Query);
@@ -123,7 +123,7 @@ class PoolLab extends IPSModule
             IPS_LogMessage(IPS_GetName($this->InstanceID), "Found Measurement $MeasurementDate $MeasurementScenario $MeasurementValue $MeasurementUnit");
         }
         
-        PoolLabAccount_InsertMeasurement($AccountID, $MeasurementScenario, $MeasurementValue, $MeasurementTimestamp);
+        PoolLabAccount_InsertMeasurement($AccountID, $MeasurementScenario, $MeasurementValue, $MeasurementComment, $MeasurementTimestamp);
 
         $StartTime = IPS_GetProperty($this->InstanceID, "StartTime");
         if ($MeasurementTimestamp > $StartTime) {

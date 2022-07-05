@@ -76,7 +76,7 @@ class PoolLabAccount extends IPSModule
         IPS_ApplyChanges($this->InstanceID);
     }
 
-    public function InsertMeasurement(string $MeasurementScenario, float $MeasurementValue, int $MeasurementTimestamp) {
+    public function InsertMeasurement(string $MeasurementScenario, float $MeasurementValue, string $MeasurementComment, int $MeasurementTimestamp) {
         $ACID = IPS_GetInstanceListByModuleID("{43192F0B-135B-4CE7-A0A7-1475603F3060}")[0];
         $ParentID = $this->InstanceID;
         $MeasurementNumber = substr($MeasurementScenario, 0, 3);
@@ -99,6 +99,19 @@ class PoolLabAccount extends IPSModule
                 IPS_ApplyChanges($ACID);
             }
         }
+        
+        $CommentVariableID = @IPS_GetObjectIDByIdent("Comment", $VariableID);
+        if ($CommentVariableID == false) {
+            $CommentVariableID = IPS_CreateVariable(3);
+            IPS_SetParent($CommentVariableID, $VariableID);
+            IPS_SetName($CommentVariableID, "Comment");
+            IPS_SetIdent($CommentVariableID, "Comment");
+            if ($ArchiveControlEnabled) {
+                AC_SetLoggingStatus($ACID, $CommentVariableID, true);
+                IPS_ApplyChanges($ACID);
+            }
+        }
+
         if ($ArchiveControlEnabled) {
             $IsLogged = sizeof(AC_GetLoggedValues($ACID, $VariableID, $MeasurementTimestamp, $MeasurementTimestamp, 1), 0);
             if ($IsLogged == 0) {
@@ -109,6 +122,7 @@ class PoolLabAccount extends IPSModule
         }
         if (time() - IPS_GetVariable($VariableID)['VariableUpdated'] > 60) {
             SetValueFloat($VariableID, $MeasurementValue);
+            SetValueString($CommentVariableID, $MeasurementComment);
         }
     }
 
