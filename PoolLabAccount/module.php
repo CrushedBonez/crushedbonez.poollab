@@ -116,7 +116,9 @@ class PoolLabAccount extends IPSModule
             $IsLogged = sizeof(AC_GetLoggedValues($ACID, $VariableID, $MeasurementTimestamp, $MeasurementTimestamp, 1), 0);
             if ($IsLogged == 0) {
                 AC_AddLoggedValues($ACID, $VariableID, [['TimeStamp' => $MeasurementTimestamp, 'Value' => $MeasurementValue]]);
+                AC_AddLoggedValues($ACID, $CommentVariableID, [['TimeStamp' => $MeasurementTimestamp, 'Value' => $MeasurementComment]]);
                 AC_ReAggregateVariable($ACID, $VariableID);
+                AC_ReAggregateVariable($ACID, $CommentVariableID);
                 sleep(1);
             }
         }

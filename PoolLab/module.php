@@ -112,7 +112,11 @@ class PoolLab extends IPSModule
         $MeasurementScenario = $Measurement->{'scenario'};
         $MeasurementParameter = $Measurement->{'parameter'};
         $MeasurementUnit = $Measurement->{'unit'};
-        $MeasurementComment = $Measurement->{'comment'};
+        if ($Measurement->{'comment'}) {
+            $MeasurementComment = $Measurement->{'comment'};
+        } else {
+            $MeasurementComment = "";
+        }
         $MeasurementValue = (float) $Measurement->{'value'};
         $MeasurementIdealLow = $Measurement->{'ideal_low'};
         $MeasurementIdealHigh = $Measurement->{'ideal_high'};
